@@ -1,9 +1,8 @@
 FROM rust:1.60 as build
 
 # Empty rust project is created, and dependencies copied into that project
-RUN USER=root cargo new --bin rust-web-server
-WORKDIR /rust-web-server
-COPY ./.cargo ./.cargo
+RUN USER=root cargo new --bin app
+WORKDIR /app
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 
@@ -17,19 +16,12 @@ COPY ./src ./src
 COPY ./templates ./templates
 
 # Remove dependency binary and trigger another release build with everything
-RUN rm ./target/release/deps/rust_web_server*
+RUN rm ./target/release/deps/app*
 RUN cargo build --release
 
 FROM debian:buster-slim
-COPY --from=build /rust-web-server/target/release/rust-web-server .
-COPY ./assets ./assets
+COPY --from=build /rust-web-app/target/release/app .
 
 EXPOSE 8000
 
-# RUN apt-get install -y curl
-# HEALTHCHECK CMD curl --fail http://localhost:8000/health || exit 1  
-
-# Label the container to link it to the Repo
-LABEL org.opencontainers.image.source="https://github.com/jake-fawcett/rust-web-server"
-
-CMD ["./rust-web-server"]
+CMD ["./app"]
